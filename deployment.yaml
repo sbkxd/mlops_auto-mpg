@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-project-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: auto-mpg-app
+  template:
+    metadata:
+      labels:
+        app: auto-mpg-app
+    spec:
+      containers:
+      - name: ml-container
+        image: sbkxd/auto-mpg-project:v1.0
+        ports:
+        - containerPort: 80
