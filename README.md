@@ -1,9 +1,6 @@
 # End-to-End MLOps Pipeline: Auto-MPG Prediction
 
 **Author:** S Bhanu Karthik
-
-**Context:** B.Tech Computing and Data Science | Machine Learning Systems Design
-
 ## Project Overview
 
 This repository demonstrates a complete, production-grade Machine Learning Operations (MLOps) architecture. The underlying machine learning task utilizes a Linear Regression model to predict the fuel efficiency (MPG) of various vehicles based on the classic Auto-MPG dataset.
