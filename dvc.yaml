@@ -1,0 +1,9 @@
+stages:
+  train_model:
+    cmd: python src/train.py
+    deps:
+    - Dataset/auto-mpg.data
+    - src/train.py
+    outs:
+    - mlruns
+    - model/model.pkl
