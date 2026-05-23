@@ -1,0 +1,26 @@
+schema: '2.0'
+stages:
+  train_model:
+    cmd: python src/train.py
+    deps:
+    - path: Dataset/auto-mpg.data
+      hash: md5
+      md5: b858f4580d0066c48e260dd3b96f1ed8
+      size: 30286
+      isexec: true
+    - path: src/train.py
+      hash: md5
+      md5: 99e10549b77174d52debf4932867817d
+      size: 1198
+      isexec: true
+    outs:
+    - path: mlruns
+      hash: md5
+      md5: 7c59d4a68e33c2ec694a7a5b5b63dbac.dir
+      size: 1924
+      nfiles: 5
+    - path: model/model.pkl
+      hash: md5
+      md5: 1c2ff340799e643cc1d141621637f3f4
+      size: 993
+      isexec: true

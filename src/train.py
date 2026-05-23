@@ -29,5 +29,6 @@ with mlflow.start_run():
     mlflow.log_metric("mse", mse)
     mlflow.log_metric("r2", r2)
     mlflow.sklearn.log_model(model, "model")
+    
     joblib.dump(model, "model/model.pkl")
     print(f"Model trained successfully. MSE: {mse:.4f}, R2: {r2:.4f}")
