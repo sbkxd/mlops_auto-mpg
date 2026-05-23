@@ -1,0 +1,22 @@
+name: ML CI Pipeline
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: pip install pandas scikit-learn mlflow joblib dvc[s3]
+      - env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-south-1
+        run: dvc pull
+      - run: dvc repro
+      - name: Save MLflow Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-cloud-logs
+          path: mlruns/
