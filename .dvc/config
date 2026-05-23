@@ -1,0 +1,4 @@
+[core]
+    remote = myremote
+['remote "myremote"']
+    url = s3://sbk-mlops-bucket/auto-mpg-project

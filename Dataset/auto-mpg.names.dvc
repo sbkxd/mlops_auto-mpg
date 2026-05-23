@@ -1,0 +1,6 @@
+outs:
+- md5: 3235a1a0e54548473963940d59b1ffa2
+  size: 1660
+  isexec: true
+  hash: md5
+  path: auto-mpg.names
