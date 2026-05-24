@@ -1,73 +1,557 @@
-# End-to-End MLOps Pipeline: Auto-MPG Prediction
+# End-to-End CI/CD Pipeline Automation with MLflow
 
-**Author:** S Bhanu Karthik
-## Project Overview
+![Python](https://img.shields.io/badge/Python-3.10-blue?style=for-the-badge\&logo=python)
+![DVC](https://img.shields.io/badge/DVC-Data%20Version%20Control-orange?style=for-the-badge)
+![MLflow](https://img.shields.io/badge/MLflow-Experiment%20Tracking-blue?style=for-the-badge)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge\&logo=docker\&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s-326CE5?style=for-the-badge\&logo=kubernetes\&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI/CD-2088FF?style=for-the-badge\&logo=githubactions\&logoColor=white)
 
-This repository demonstrates a complete, production-grade Machine Learning Operations (MLOps) architecture. The underlying machine learning task utilizes a Linear Regression model to predict the fuel efficiency (MPG) of various vehicles based on the classic Auto-MPG dataset.
+---
 
-The primary objective of this project is the implementation of a robust infrastructure lifecycle, encompassing data versioning, continuous integration, containerization, deployment orchestration, and experiment observability.
+# Project Overview
 
-## Technology Stack
+This project demonstrates a complete end-to-end MLOps workflow by implementing a fully automated CI/CD pipeline for machine learning using the Auto-MPG dataset. The system integrates modern machine learning infrastructure tools such as DVC, MLflow, GitHub Actions, Docker, and Kubernetes to ensure reproducibility, experiment tracking, automation, and scalable deployment.
 
-* **Machine Learning:** Python, scikit-learn, pandas
-* **Experiment Tracking & Observability:** MLflow
-* **Data Version Control:** DVC, AWS S3
-* **Continuous Integration:** GitHub Actions
-* **Containerization:** Docker
-* **Deployment & Orchestration:** Kubernetes (K3s)
+The pipeline trains a Linear Regression model to predict vehicle fuel efficiency (MPG) while automating every stage of the machine learning lifecycle — from dataset versioning and experiment tracking to containerization and Kubernetes deployment.
 
-## Repository Structure
+The implementation highlights practical MLOps engineering concepts including:
+
+* Data Version Control (DVC)
+* Automated CI pipelines
+* Experiment tracking with MLflow
+* Docker-based containerization
+* Kubernetes orchestration and scaling
+
+---
+
+# Architecture Diagram
 
 ```text
-.
-├── .github/workflows/
-│   └── ml.yml                 # GitHub Actions CI pipeline configuration
+                 ┌──────────────────────┐
+                 │   Auto-MPG Dataset   │
+                 └──────────┬───────────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │   DVC Data Tracking  │
+                 └──────────┬───────────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │    AWS S3 Remote     │
+                 │   Artifact Storage   │
+                 └──────────┬───────────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │   train.py Script    │
+                 │ Linear Regression ML │
+                 └──────────┬───────────┘
+                            │
+          ┌─────────────────┴─────────────────┐
+          ▼                                   ▼
+┌──────────────────┐              ┌──────────────────┐
+│  MLflow Logging  │              │   model.pkl      │
+│  Metrics + Runs  │              │ Serialized Model │
+└─────────┬────────┘              └─────────┬────────┘
+          │                                  │
+          └──────────────┬───────────────────┘
+                         ▼
+               ┌──────────────────┐
+               │   DVC Pipeline   │
+               │     (dvc.yaml)   │
+               └────────┬─────────┘
+                        │
+                        ▼
+              ┌────────────────────┐
+              │ GitHub Actions CI  │
+              │  Automated Re-run  │
+              └────────┬───────────┘
+                       │
+                       ▼
+              ┌────────────────────┐
+              │   Docker Image     │
+              │ sbkxd/auto-mpg...  │
+              └────────┬───────────┘
+                       │
+                       ▼
+              ┌────────────────────┐
+              │ Kubernetes / K3s   │
+              │   3 Replica Pods   │
+              └────────────────────┘
+```
+
+---
+
+# Tech Stack
+
+| Technology       | Purpose                                |
+| ---------------- | -------------------------------------- |
+| Python 3.10      | Core programming language              |
+| Git & GitHub     | Version control and repository hosting |
+| DVC              | Dataset and pipeline versioning        |
+| AWS S3           | Remote artifact storage for DVC        |
+| MLflow           | Experiment tracking and metric logging |
+| scikit-learn     | Linear Regression model training       |
+| joblib           | Model serialization (.pkl storage)     |
+| GitHub Actions   | Continuous Integration automation      |
+| Docker           | Application containerization           |
+| Kubernetes / K3s | Container orchestration and scaling    |
+
+---
+
+# Project Structure
+
+```text
+MLSD-CI-CD-MLflow/
+│
 ├── Dataset/
-│   ├── auto-mpg.data          # Raw dataset (Tracked via DVC, ignored by Git)
-│   ├── auto-mpg.names         # Dataset metadata
-│   └── auto-mpg.data.dvc      # DVC metadata pointer for S3 remote
-├── model/
-│   └── model.pkl              # Serialized ML model (Generated post-training)
+│   ├── auto-mpg.data
+│   ├── auto-mpg.names
+│   ├── auto-mpg.data.dvc
+│   └── auto-mpg.names.dvc
+│
 ├── src/
-│   └── train.py               # ML training script with MLflow integration
-├── mlruns/                    # Local MLflow artifact storage
-├── .dvc/                      # DVC configuration directory
-├── Dockerfile                 # Containerization instructions
-├── deployment.yaml            # Kubernetes declarative deployment configuration
-└── requirements.txt           # Python dependencies
-
+│   └── train.py
+│
+├── model/
+│   └── model.pkl
+│
+├── Notebooks/
+│   └── experimentation.ipynb
+│
+├── mlruns/
+│   └── MLflow tracking artifacts
+│
+├── .github/
+│   └── workflows/
+│       └── ml.yml
+│
+├── Dockerfile
+├── deployment.yaml
+├── dvc.yaml
+├── dvc.lock
+├── requirements.txt
+├── README.md
+└── .gitignore
 ```
 
-## Architecture and Workflow
+---
 
-### 1. Data Versioning (DVC & AWS S3)
+# Pipeline Walkthrough
 
-The raw datasets are tracked using Data Version Control (DVC) to prevent large file inflation within the Git repository. The `.dvc` tracking files are committed to Git, while the actual data binaries are pushed to an AWS S3 bucket. This ensures the training data is highly available and strictly version-controlled alongside the source code.
+## 1. Directory Setup and Git Initialization
 
-### 2. Model Training and Observability (MLflow)
+The project workspace and repository structure were created to organize datasets, source code, models, notebooks, and MLflow artifacts.
 
-The training logic is encapsulated in `src/train.py`. The script performs data preprocessing, an 80-20 train-test split, and model fitting. MLflow is integrated directly into the script to automatically log hyperparameters, Mean Squared Error (MSE), R-squared metrics, and the serialized model artifacts.
+### Commands
 
-### 3. Continuous Integration (GitHub Actions)
-
-A CI pipeline is configured to trigger automatically upon every push to the repository. The cloud runner provisions an Ubuntu environment, authenticates with AWS, pulls the latest dataset via DVC, and executes the training pipeline (`dvc repro`). The resulting MLflow metrics are packaged and uploaded as a build artifact for post-execution review.
-
-### 4. Containerization (Docker)
-
-The application, its runtime environment, and the serialized model (`model.pkl`) are packaged into an isolated Docker container. This guarantees execution consistency across local, testing, and production environments.
-
-### 5. Orchestration (Kubernetes)
-
-The containerized application is deployed utilizing a declarative Kubernetes configuration (`deployment.yaml`). The deployment manages three distinct application replicas to ensure high availability, fault tolerance, and load distribution, exposed locally via a NodePort service.
-
-## Local Execution Instructions
-
-### Prerequisites
-
-* Python 3.10+
-* Docker Desktop
-* Kubernetes (K3s or Minikube)
-* AWS CLI configured with active credentials
-kubectl expose deployment ml-project-deployment --type=NodePort --port=80
-
+```bash
+mkdir -p Dataset src model Notebooks mlruns
+git init
 ```
+
+---
+
+## 2. DVC Initialization and Dataset Tracking
+
+DVC was initialized to version-control machine learning datasets independently from Git.
+
+### Commands
+
+```bash
+dvc init
+
+dvc add Dataset/auto-mpg.data
+dvc add Dataset/auto-mpg.names
+```
+
+This generated lightweight `.dvc` metadata files while keeping large datasets outside Git tracking.
+
+---
+
+## 3. AWS S3 Remote Storage Configuration
+
+An AWS S3 bucket was configured as the remote storage backend for DVC artifacts and datasets.
+
+### Commands
+
+```bash
+dvc remote add -d myremote s3://auto-mpg-project
+dvc push
+```
+
+This synchronized local artifacts with cloud storage for reproducibility and distributed access.
+
+---
+
+## 4. ML Training Script Development
+
+The training pipeline was implemented in `src/train.py` using Linear Regression with preprocessing, train-test split, MLflow logging, and model serialization.
+
+### Features Implemented
+
+* Data preprocessing
+* 80-20 train-test split
+* Linear Regression model training
+* MLflow metric logging
+* Model serialization using joblib
+
+### Key Commands
+
+```python
+mlflow.start_run()
+joblib.dump(model, "model/model.pkl")
+```
+
+---
+
+## 5. DVC Pipeline Definition
+
+A reproducible DVC pipeline stage was created linking:
+
+* Input dataset
+* Training script
+* Output model artifact
+* MLflow logs
+
+### Command
+
+```bash
+dvc stage add -n train \
+-d src/train.py \
+-d Dataset/auto-mpg.data \
+-o model/model.pkl \
+-o mlruns \
+python src/train.py
+```
+
+---
+
+## 6. Pipeline Execution and Artifact Push
+
+The DVC pipeline was executed and generated artifacts were pushed to remote storage.
+
+### Commands
+
+```bash
+dvc repro
+dvc push
+```
+
+This ensured reproducible training and remote artifact synchronization.
+
+---
+
+## 7. GitHub Actions CI Configuration
+
+A CI workflow was configured using GitHub Actions to automate validation and pipeline execution on every repository push.
+
+### Workflow Features
+
+* Ubuntu VM provisioning
+* Python dependency installation
+* DVC dataset pulling
+* Automated pipeline execution
+
+### Trigger
+
+```yaml
+on: [push]
+```
+
+---
+
+## 8. Dockerfile Authoring
+
+A Docker container was created to package the ML application and dependencies.
+
+### Dockerfile Base
+
+```dockerfile
+FROM python:3.10-slim
+```
+
+### Runtime Command
+
+```dockerfile
+CMD ["python", "-m", "http.server", "80"]
+```
+
+---
+
+## 9. Docker Image Build and Push
+
+The container image was built locally and pushed to DockerHub.
+
+### Commands
+
+```bash
+docker build -t sbkxd/auto-mpg-project:v1.0 .
+docker push sbkxd/auto-mpg-project:v1.0
+```
+
+DockerHub Image:
+
+```text
+sbkxd/auto-mpg-project:v1.0
+```
+
+---
+
+## 10. Kubernetes Deployment Configuration
+
+A Kubernetes deployment configuration was authored to orchestrate the containerized application.
+
+### Features
+
+* 3 replica pods
+* NodePort service
+* Port 80 exposure
+* Fault tolerance and scalability
+
+### Example
+
+```yaml
+replicas: 3
+```
+
+---
+
+## 11. Deployment to K3s Cluster
+
+The application was deployed to a local K3s Kubernetes cluster.
+
+### Command
+
+```bash
+kubectl apply -f deployment.yaml
+```
+
+This launched three active pods with self-healing orchestration support.
+
+---
+
+## 12. MLflow Visualization
+
+MLflow UI was used to visualize and monitor experiment metrics.
+
+### Logged Metrics
+
+* Mean Squared Error (MSE)
+* R² Score
+
+### Command
+
+```bash
+mlflow ui
+```
+
+---
+
+# Model Performance
+
+| Metric                   | Value |
+| ------------------------ | ----- |
+| Mean Squared Error (MSE) | 10.71 |
+| R² Score                 | 0.79  |
+
+---
+
+# How to Reproduce
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/MLSD-CI-CD-MLflow.git
+cd MLSD-CI-CD-MLflow
+```
+
+---
+
+## 2. Create Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+### Linux / Mac
+
+```bash
+source venv/bin/activate
+```
+
+### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+---
+
+## 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 4. Pull Dataset from DVC Remote
+
+```bash
+dvc pull
+```
+
+---
+
+## 5. Run the Pipeline
+
+```bash
+dvc repro
+```
+
+---
+
+## 6. Launch MLflow UI
+
+```bash
+mlflow ui
+```
+
+Open in browser:
+
+```text
+http://127.0.0.1:5000
+```
+
+---
+
+# CI/CD Workflow
+
+The repository includes an automated GitHub Actions workflow defined in:
+
+```text
+.github/workflows/ml.yml
+```
+
+## Workflow Trigger
+
+The workflow automatically executes whenever code is pushed to the repository.
+
+```yaml
+on: [push]
+```
+
+## Workflow Responsibilities
+
+* Creates Ubuntu runner environment
+* Installs Python dependencies
+* Pulls datasets using DVC
+* Reproduces ML pipeline
+* Validates training execution
+* Ensures reproducibility
+
+This creates a fully automated CI validation pipeline for the machine learning workflow.
+
+---
+
+# Docker and Kubernetes Deployment
+
+## Pull Docker Image
+
+```bash
+docker pull sbkxd/auto-mpg-project:v1.0
+```
+
+---
+
+## Run Docker Container
+
+```bash
+docker run -p 80:80 sbkxd/auto-mpg-project:v1.0
+```
+
+---
+
+## Deploy to Kubernetes
+
+```bash
+kubectl apply -f deployment.yaml
+```
+
+---
+
+## Verify Pods
+
+```bash
+kubectl get pods
+```
+
+---
+
+## Verify Services
+
+```bash
+kubectl get services
+```
+
+---
+
+# MLflow Tracking
+
+MLflow was integrated for experiment tracking and observability.
+
+## Features Logged
+
+* Model parameters
+* Training metrics
+* MSE
+* R² Score
+* Experiment runs
+* Artifact storage
+
+## Launch UI
+
+```bash
+mlflow ui
+```
+
+## Default Access URL
+
+```text
+http://127.0.0.1:5000
+```
+
+The dashboard enables visualization and comparison of training runs in real time.
+
+---
+
+# Limitations and Future Work
+
+* Current implementation uses only a simple Linear Regression model.
+* Hyperparameter tuning and advanced optimization techniques are not included.
+* The deployment currently serves static artifacts rather than a production-grade inference API.
+* Cloud-native Kubernetes deployment on AWS EKS/GKE is not yet implemented.
+* Monitoring, alerting, and model drift detection can be integrated in future versions.
+* CI/CD currently focuses mainly on Continuous Integration and can be extended toward full Continuous Deployment.
+
+---
+
+# Author
+
+## S Bhanu Karthik
+
+---
+
+# References
+
+* DVC Documentation: [https://dvc.org/doc](https://dvc.org/doc)
+* MLflow Documentation: [https://mlflow.org/docs/latest/index.html](https://mlflow.org/docs/latest/index.html)
+* Docker Documentation: [https://docs.docker.com/](https://docs.docker.com/)
+* Kubernetes Documentation: [https://kubernetes.io/docs/](https://kubernetes.io/docs/)
+
+---
+
+> This project demonstrates a practical implementation of modern MLOps principles including reproducibility, experiment tracking, CI/CD automation, containerization, and orchestration within a unified machine learning engineering workflow.
